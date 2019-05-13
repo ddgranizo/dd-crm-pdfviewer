@@ -6,6 +6,7 @@ var defaultSettings = {
         saveFirstText: "Save first the record. Then reload the page.",
         foundZeroDocuments: "Can't find any PDF in this record. Use annotations to attach PDFs",
         loadingFiles: "Loading PDFs...",
+        errorTitle: "Error",
     }
 }
 
@@ -18,7 +19,6 @@ app.service('settingsService', ['$window',
         this.triedParse = false;
         this.userData = null;
 
-
         this.parseUserData = function () {
             let rawData = this.getQueryParam("data");
             let decoded = decodeURIComponent(rawData);
@@ -29,11 +29,9 @@ app.service('settingsService', ['$window',
                 console.log(decoded);
                 console.error(error);
             }
-            console.log(this.userData);
         }
 
         this.getSetting = function (settingName) {
-
             if (this.triedParse == false) {
                 this.triedParse = true;
                 this.parseUserData();
@@ -118,15 +116,9 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
             return $http({
                 method: 'GET',
                 url: url
+            }).then(response => {
+                return response;
             })
-                .then(response => {
-                    return response;
-                })
-                .catch(function (data) {
-                    console.log("Error:");
-                    console.log(url);
-                    console.log(data);
-                });
         }
 
         getApiUrl = function () {
@@ -165,7 +157,7 @@ app.directive('mainView',
                     $scope.saveFirstTitleMessage = null;
                     $scope.saveFirstTextMessage = null;
                     $scope.foundZeroDocumentsMessage = null;
-
+                    $scope.errorTitleMessage = null;
                     initialize = function () {
 
                         $scope.setMessages();
@@ -188,11 +180,13 @@ app.directive('mainView',
                         $scope.saveFirstTitleMessage = settingsService.getSetting("messages.saveFirstTitle");
                         $scope.saveFirstTextMessage = settingsService.getSetting("messages.saveFirstText");
                         $scope.foundZeroDocumentsMessage = settingsService.getSetting("messages.foundZeroDocuments");
+                        $scope.errorTitleMessage = settingsService.getSetting("messages.errorTitle");
                     }
 
                     $scope.reloadAnnotations = function () {
                         $scope.unsetInfo();
-                        $scope.contextPdfs.splice(0, $scope.contextPdfs.length);
+                        $scope.unsetError();
+                        $scope.clearArray($scope.contextPdfs);
                         $scope.selectedPdf = null;
                         $scope.loadingAnnotations = true;
                         xrmRepositoryService.getPdfAnnotations($scope.contextEntityName, $scope.contextId)
@@ -206,11 +200,23 @@ app.directive('mainView',
                                 $scope.loadingAnnotations = false;
                             })
                             .catch(error => {
-                                console.log("Error:");
-                                console.log(error);
                                 $scope.loadingAnnotations = false;
-                                $scope.setInfo($scope.saveFirstTitleMessage, $scope.foundZeroDocumentsMessage);
+                                let stringfy = $scope.stringfyError(error, null, '\t');
+                                $scope.setError($scope.errorTitleMessage, stringfy);
                             });
+                    }
+
+
+                    $scope.stringfyError = function (err, filter, space) {
+                        var plainObject = {};
+                        Object.getOwnPropertyNames(err).forEach(function (key) {
+                            plainObject[key] = err[key];
+                        });
+                        return JSON.stringify(plainObject, filter, space);
+                    };
+
+                    $scope.clearArray = function (arr) {
+                        arr.splice(0, arr.length);
                     }
 
                     $scope.getPdfTitle = function (annotation) {
@@ -218,8 +224,8 @@ app.directive('mainView',
                     }
 
                     $scope.$watch('selectedPdf', function (newValue, oldValue) {
-                        if (newValue != null
-                            && newValue["annotationid"] != null) {
+                        if (newValue !== null
+                            && newValue["annotationid"] !== null) {
                             const encoded = newValue["documentbody"];
                             pdfService.setPdf(encoded);
                         }
@@ -235,6 +241,19 @@ app.directive('mainView',
                         $scope.infoMessage = message;
                         $scope.infoTitle = title;
                         $scope.isInfoMessage = true;
+                    }
+
+
+                    $scope.unsetError = function () {
+                        $scope.errorMessage = null;
+                        $scope.errorTitle = null;
+                        $scope.isErrorMessage = false;
+                    }
+
+                    $scope.setError = function (title, message) {
+                        $scope.errorMessage = message;
+                        $scope.errorTitle = title;
+                        $scope.isErrorMessage = true;
                     }
 
                     checkNullIdParameter = function (id) {

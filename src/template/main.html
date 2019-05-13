@@ -22,6 +22,13 @@
         </div>
     </div>
 
+    <div class="pdf-title-padding" ng-show="isErrorMessage">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">{{ errorTitle }}</h4>
+                <p>{{ errorMessage }}</p>
+            </div>
+        </div>
+
     <div class="pdf-title-padding" ng-show="isInfoMessage">
         <div class="alert alert-primary" role="alert">
             <h4 class="alert-heading">{{ infoTitle }}</h4>

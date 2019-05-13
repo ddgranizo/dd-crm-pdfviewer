@@ -185,8 +185,8 @@ app.directive('mainView',
 
                     $scope.setMessages = function () {
                         $scope.loadingPdfMessage = settingsService.getSetting("messages.loadingFiles");
-                        $scope.saveFirstTitleMessage = settingsService.getSetting("messages.saveFirstText");
-                        $scope.saveFirstTextMessage = settingsService.getSetting("messages.saveFirstTitle");
+                        $scope.saveFirstTitleMessage = settingsService.getSetting("messages.saveFirstTitle");
+                        $scope.saveFirstTextMessage = settingsService.getSetting("messages.saveFirstText");
                         $scope.foundZeroDocumentsMessage = settingsService.getSetting("messages.foundZeroDocuments");
                     }
 

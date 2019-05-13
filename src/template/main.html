@@ -1,0 +1,73 @@
+<div id="mainViewController">
+
+
+    <div class="container h-100" ng-show="loadingAnnotations">
+        <div class="row align-items-center h-100">
+            <div class="col">
+                <div>Loading PDFs...</div>
+                <div class="spinner-border" role="status"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="pdf-padding" ng-show="!loadingAnnotations">
+        <div class="row d-flex flex-row">
+            <!-- <div ng-show="" class="col">
+                <div>Loading annotations...</div>
+                <div class="spinner-border" role="status"></div>
+            </div> -->
+
+            <span class="icon-handler" ng-click="reloadAnnotations()" ng-show="!notContextId">
+                <i class="fas fa-sync"></i>
+            </span>
+
+            <div class="form-group col" ng-show="contextPdfs.length>0">
+                <select class=" form-control" ng-model="selectedPdf">
+                    <option ng-repeat="pdf in contextPdfs" ng-value="pdf">{{ getPdfTitle(pdf) }}</option>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="pdf-title-padding" ng-show="isInfoMessage">
+        <div class="alert alert-primary" role="alert">
+            <h4 class="alert-heading">{{ infoTitle }}</h4>
+            <p>{{ infoMessage }}</p>
+        </div>
+    </div>
+
+
+    <div class="container h-100" ng-show="!loadingAnnotations && selectedPdf!=null">
+        <div class="row align-items-center h-100">
+            <canvas id="pdf-canvas"></canvas>
+        </div>
+    </div>
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="errorModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ errTitle }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ errText }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-show="errOk!=null">{{ errOk }}</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                        ng-show="errCancel!=null">{{ errCancel }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+</div>

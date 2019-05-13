@@ -2,7 +2,8 @@ var defaultSettings = {
     crmVersion: "9.1",
     messages: {
         saveFirstTitle: "Can't load any PDF",
-        saveFirstText: "Save first the record",
+        saveFirstText: "Save first the record. Then reload the page.",
+        foundZeroDocuments: "Can't find any PDF in this record. Use annotations to attach PDFs",
     }
 }
 
@@ -37,6 +38,7 @@ app.service('pdfService', ['$window',
             }, function (reason) {
                 console.error(reason);
             });
+            return loadingTask;
         }
     }]);
 
@@ -74,7 +76,6 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
     function ($window, $http, $q, $rootScope, settingsService) {
 
         this.getPdfAnnotations = function (entity, id) {
-            //https://xaviercatasandbox.crm4.dynamics.com/api/data/v9.1/annotations?$filter=_objectid_value%20eq%20183B106B-FE74-E911-A85B-000D3AB0DA57 and objecttypecode eq ddg_annotationtest
             return webApiGet(`annotations?$filter=objecttypecode eq '${entity}' and _objectid_value eq ${id} and mimetype eq 'application/pdf'`)
                 .then(response => { return response.data.value; })
         }
@@ -82,7 +83,6 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
 
         webApiGet = function (options) {
             const url = getApiUrl() + options;
-
             return $http({
                 method: 'GET',
                 url: url
@@ -123,19 +123,19 @@ app.directive('mainView',
                     $scope.contextEntityName = null;
                     $scope.contextId = null;
                     $scope.contextPdfs = [];
+                    
                     $scope.selectedPdf = null;
-
+                    $scope.isInfoMessage = false;
+                    $scope.notContextId = false;
                     initialize = function () {
 
-                        var messages = settingsService.getSetting("messages");
+                        $scope.setMessages();
                         
-                        $scope.messages = messages;
-                        $scope.isInfoMessage = false;
-
                         var contextId = settingsService.getQueryParam("id");
                         var contextTypeName = settingsService.getQueryParam("typename");
-                        
+
                         if (checkNullIdParameter(contextId)) {
+                            $scope.notContextId = true;
                             $scope.setInfo($scope.messages.saveFirstTitle, $scope.messages.saveFirstText);
                             return;
                         }
@@ -144,23 +144,33 @@ app.directive('mainView',
                         $scope.reloadAnnotations();
                     }
 
+                    $scope.setMessages = function(){
+                        var messages = settingsService.getSetting("messages");
+                        $scope.messages = messages;
+                    }
 
                     $scope.reloadAnnotations = function () {
-                        $scope.contextPdfs = [];
+                        $scope.unsetInfo();
+                        $scope.contextPdfs.splice(0, $scope.contextPdfs.length);
+                        $scope.selectedPdf = null;
                         $scope.loadingAnnotations = true;
                         xrmRepositoryService.getPdfAnnotations($scope.contextEntityName, $scope.contextId)
                             .then(pdfs => {
                                 console.log(pdfs);
                                 if (pdfs.length > 0) {
                                     $scope.selectedPdf = pdfs[0];
+                                    $scope.contextPdfs = pdfs;
+                                } else {
+                                    $scope.setInfo($scope.messages.saveFirstTitle, $scope.messages.foundZeroDocuments);
                                 }
-                                $scope.contextPdfs = pdfs;
                                 $scope.loadingAnnotations = false;
                             })
                             .catch(error => {
                                 console.log("Error:");
                                 console.log(error);
-                            })
+                                $scope.loadingAnnotations = false;
+                                $scope.setInfo($scope.messages.saveFirstTitle, $scope.messages.foundZeroDocuments);
+                            });
                     }
 
                     $scope.getPdfTitle = function (annotation) {
@@ -168,13 +178,18 @@ app.directive('mainView',
                     }
 
                     $scope.$watch('selectedPdf', function (newValue, oldValue) {
-
                         if (newValue != null
                             && newValue["annotationid"] != null) {
                             const encoded = newValue["documentbody"];
                             pdfService.setPdf(encoded);
                         }
                     })
+
+                    $scope.unsetInfo = function () {
+                        $scope.infoMessage = null;
+                        $scope.infoTitle = null;
+                        $scope.isInfoMessage = false;
+                    }
 
                     $scope.setInfo = function (title, message) {
                         $scope.infoMessage = message;
@@ -195,61 +210,10 @@ app.directive('mainView',
                         return typeof id === 'undefined' || id === null || id === 0 || id === '0';
                     }
 
-
-
                     initialize();
 
                 },
-                template:
-                    ['<div id="mainViewController">',
-
-                        //Toolbar
-                        '<div class="pdf-padding">',
-                        '   <div class="row">',
-                        '       <span  ng-show="!loadingAnnotations" style="font-size: 20px; margin: 10px; cursor: pointer;" ng-click="reloadAnnotations()"><i class="fas fa-sync"></i></span>',
-                        '       <div ng-if="loadingAnnotations" style="text-align:center;"><div>Loading annotations...</div><div class="spinner-border" role="status"></div></div>',
-                        '        <div class="form-group">',
-                        '           <label >Pdfs</label>',
-                        '           <select class="form-control" ng-model="selectedPdf">',
-                        '               <option ng-repeat="pdf in contextPdfs" ng-value="pdf" >{{ getPdfTitle(pdf) }}</option>',
-                        '           </select>',
-                        '       </div>',
-                        '   </div>',
-                        '</div>', //container
-
-                        //info message
-                        '<div class="pdf-title-padding" ng-show="isInfoMessage">',
-                        '   <div class="alert alert-primary" role="alert">',
-                        '       <h4 class="alert-heading">{{ messages.saveFirstTitle }}</h4>',
-                        '       <p>{{ messages.saveFirstText }}</p>',
-                        '   </div>',
-                        '</div>',
-
-                        //pdfviewer
-                        '<canvas id="pdf-canvas"></canvas>',
-
-                        //err message modal
-                        '<div class="modal" tabindex="-1" role="dialog" id="errorModal">',
-                        '   <div class="modal-dialog" role="document">',
-                        '       <div class="modal-content">',
-                        '           <div class="modal-header">',
-                        '               <h5 class="modal-title">{{ errTitle }}</h5>',
-                        '               <button type="button" class="close" data-dismiss="modal" aria-label="Close">',
-                        '                   <span aria-hidden="true">&times;</span>',
-                        '               </button>',
-                        '           </div>',
-                        '           <div class="modal-body">',
-                        '               <p>{{ errText }}</p>',
-                        '           </div>',
-                        '           <div class="modal-footer">',
-                        '               <button type="button" class="btn btn-primary"  ng-show="errOk!=null">{{ errOk }}</button>',
-                        '               <button type="button" class="btn btn-secondary" data-dismiss="modal" ng-show="errCancel!=null">{{ errCancel }}</button>',
-                        '           </div>',
-                        '       </div>',
-                        '   </div>',
-                        '</div>',
-                        '</div>',
-                        '</div>'].join(""),
+                templateUrl: 'template/main.html',
                 replace: true
             };
 

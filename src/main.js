@@ -1,51 +1,49 @@
 var defaultSettings = {
     crmVersion: "9.1",
+    scale: 1,
     messages: {
         saveFirstTitle: "Can't load any PDF",
         saveFirstText: "Save first the record. Then reload the page.",
         foundZeroDocuments: "Can't find any PDF in this record. Use annotations to attach PDFs",
+        loadingFiles: "Loading PDFs...",
     }
 }
-
 
 var app = angular.module("ddApp", [])
     .controller("pdfVieweController", ["$scope", ($scope) => { }]);
 
-app.service('pdfService', ['$window',
-    function ($window) {
-        this.setPdf = function (encoded) {
-            var pdfjsLib = $window['pdfjs-dist/build/pdf'];
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.js';
-            var loadingTask = pdfjsLib.getDocument({ data: atob(encoded) });
-            loadingTask.promise.then(function (pdf) {
-                var pageNumber = 1;
-                pdf.getPage(pageNumber).then(function (page) {
-                    var scale = 1.5;
-                    var viewport = page.getViewport({ scale: scale });
-                    var canvas = document.getElementById('pdf-canvas');
-                    var context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    var renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    var renderTask = page.render(renderContext);
-                    renderTask.promise.then(function () {
-                        //completed
-                    });
-                });
-            }, function (reason) {
-                console.error(reason);
-            });
-            return loadingTask;
-        }
-    }]);
-
 app.service('settingsService', ['$window',
     function ($window) {
+
+        this.triedParse = false;
+        this.userData = null;
+
+
+        this.parseUserData = function () {
+            let rawData = this.getQueryParam("data");
+            let decoded = decodeURIComponent(rawData);
+            try {
+                this.userData = JSON.parse(decoded);
+            } catch (error) {
+                console.log("Error parsing context data. Is not valid json.");
+                console.log(decoded);
+                console.error(error);
+            }
+            console.log(this.userData);
+        }
+
         this.getSetting = function (settingName) {
-            //todo: get settig from data pased from CRM context
+
+            if (this.triedParse == false) {
+                this.triedParse = true;
+                this.parseUserData();
+            }
+            if (this.userData != null) {
+                let userValue = this.getPropertyFromString(this.userData, settingName);
+                if (userValue != null) {
+                    return userValue;
+                }
+            }
             return this.getPropertyFromString($window.defaultSettings, settingName);
         }
 
@@ -72,6 +70,41 @@ app.service('settingsService', ['$window',
     }]);
 
 
+
+app.service('pdfService', ['$window', 'settingsService',
+    function ($window, settingsService) {
+        this.setPdf = function (encoded) {
+            var pdfjsLib = $window['pdfjs-dist/build/pdf'];
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.js';
+            var loadingTask = pdfjsLib.getDocument({ data: atob(encoded) });
+            loadingTask.promise.then(function (pdf) {
+                var pageNumber = 1;
+                pdf.getPage(pageNumber).then(function (page) {
+                    var initialScale = settingsService.getSetting("scale");
+                    var scale = initialScale;
+                    var viewport = page.getViewport({ scale: scale });
+                    var canvas = document.getElementById('pdf-canvas');
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    var renderTask = page.render(renderContext);
+                    renderTask.promise.then(function () {
+                        //completed
+                    });
+                });
+            }, function (reason) {
+                console.error(reason);
+            });
+            return loadingTask;
+        }
+    }]);
+
+
+
 app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'settingsService',
     function ($window, $http, $q, $rootScope, settingsService) {
 
@@ -79,7 +112,6 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
             return webApiGet(`annotations?$filter=objecttypecode eq '${entity}' and _objectid_value eq ${id} and mimetype eq 'application/pdf'`)
                 .then(response => { return response.data.value; })
         }
-
 
         webApiGet = function (options) {
             const url = getApiUrl() + options;
@@ -123,20 +155,27 @@ app.directive('mainView',
                     $scope.contextEntityName = null;
                     $scope.contextId = null;
                     $scope.contextPdfs = [];
-                    
+
                     $scope.selectedPdf = null;
                     $scope.isInfoMessage = false;
                     $scope.notContextId = false;
+
+
+                    $scope.loadingPdfMessage = null;
+                    $scope.saveFirstTitleMessage = null;
+                    $scope.saveFirstTextMessage = null;
+                    $scope.foundZeroDocumentsMessage = null;
+
                     initialize = function () {
 
                         $scope.setMessages();
-                        
+
                         var contextId = settingsService.getQueryParam("id");
                         var contextTypeName = settingsService.getQueryParam("typename");
 
                         if (checkNullIdParameter(contextId)) {
                             $scope.notContextId = true;
-                            $scope.setInfo($scope.messages.saveFirstTitle, $scope.messages.saveFirstText);
+                            $scope.setInfo($scope.saveFirstTitleMessage, $scope.saveFirstTextMessage);
                             return;
                         }
                         $scope.contextEntityName = contextTypeName;
@@ -144,9 +183,11 @@ app.directive('mainView',
                         $scope.reloadAnnotations();
                     }
 
-                    $scope.setMessages = function(){
-                        var messages = settingsService.getSetting("messages");
-                        $scope.messages = messages;
+                    $scope.setMessages = function () {
+                        $scope.loadingPdfMessage = settingsService.getSetting("messages.loadingFiles");
+                        $scope.saveFirstTitleMessage = settingsService.getSetting("messages.saveFirstText");
+                        $scope.saveFirstTextMessage = settingsService.getSetting("messages.saveFirstTitle");
+                        $scope.foundZeroDocumentsMessage = settingsService.getSetting("messages.foundZeroDocuments");
                     }
 
                     $scope.reloadAnnotations = function () {
@@ -156,12 +197,11 @@ app.directive('mainView',
                         $scope.loadingAnnotations = true;
                         xrmRepositoryService.getPdfAnnotations($scope.contextEntityName, $scope.contextId)
                             .then(pdfs => {
-                                console.log(pdfs);
                                 if (pdfs.length > 0) {
                                     $scope.selectedPdf = pdfs[0];
                                     $scope.contextPdfs = pdfs;
                                 } else {
-                                    $scope.setInfo($scope.messages.saveFirstTitle, $scope.messages.foundZeroDocuments);
+                                    $scope.setInfo($scope.saveFirstTitleMessage, $scope.foundZeroDocumentsMessage);
                                 }
                                 $scope.loadingAnnotations = false;
                             })
@@ -169,7 +209,7 @@ app.directive('mainView',
                                 console.log("Error:");
                                 console.log(error);
                                 $scope.loadingAnnotations = false;
-                                $scope.setInfo($scope.messages.saveFirstTitle, $scope.messages.foundZeroDocuments);
+                                $scope.setInfo($scope.saveFirstTitleMessage, $scope.foundZeroDocumentsMessage);
                             });
                     }
 
@@ -195,15 +235,6 @@ app.directive('mainView',
                         $scope.infoMessage = message;
                         $scope.infoTitle = title;
                         $scope.isInfoMessage = true;
-                    }
-
-                    $scope.raiseMessage = function (title, text, ok, cancel) {
-                        $scope.errTitle = title;
-                        $scope.errText = text;
-                        $scope.errOk = ok;
-                        $scope.errCancel = cancel;
-
-                        $('#errorModal').modal(null);
                     }
 
                     checkNullIdParameter = function (id) {

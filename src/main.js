@@ -42,7 +42,8 @@ app.service('settingsService', ['$window',
                     return userValue;
                 }
             }
-            return this.getPropertyFromString($window.defaultSettings, settingName);
+            let defaultValue = this.getPropertyFromString($window.defaultSettings, settingName);
+            return defaultValue;
         }
 
         this.getQueryParam = function (name) {
@@ -109,7 +110,9 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
 
         this.getPdfAnnotations = function (entity, id) {
             return this.webApiGet(`annotations?$filter=objecttypecode eq '${entity}' and _objectid_value eq ${id} and mimetype eq 'application/pdf'`)
-                .then(response => { return response.data.value; })
+                .then(response => { 
+                    return response.data.value; 
+                })
         }
 
         this.webApiGet = function (options) {
@@ -165,7 +168,7 @@ app.directive('mainView',
                         var contextId = settingsService.getQueryParam("id");
                         var contextTypeName = settingsService.getQueryParam("typename");
 
-                        if (checkNullIdParameter(contextId)) {
+                        if ($scope.checkNullIdParameter(contextId)) {
                             $scope.notContextId = true;
                             $scope.setInfo($scope.saveFirstTitleMessage, $scope.saveFirstTextMessage);
                             return;
@@ -232,6 +235,7 @@ app.directive('mainView',
                     })
 
                     $scope.unsetInfo = function () {
+                        
                         $scope.infoMessage = null;
                         $scope.infoTitle = null;
                         $scope.isInfoMessage = false;
@@ -256,7 +260,7 @@ app.directive('mainView',
                         $scope.isErrorMessage = true;
                     }
 
-                    checkNullIdParameter = function (id) {
+                    $scope.checkNullIdParameter = function (id) {
                         return typeof id === 'undefined' || id === null || id === 0 || id === '0';
                     }
 

@@ -5,6 +5,10 @@ Pdf viewer for Dynamics CRM
 #Install karma:
 npm install -g yo generator-karma
 
+For test directives
+npm install karma-ng-html2js-preprocessor
+
+
 #Configurar karma
 yo karma --browsers "Chrome" --app-files "src/**/*.js" --test-files "test/**/*.js" --base-path ".."
 

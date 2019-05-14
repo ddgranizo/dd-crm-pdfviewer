@@ -19,20 +19,33 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'src/thirds/js/pdf.js',
-      'src/thirds/js/font-awesome.min.js',
-      'src/thirds/js/jquery-3.3.1.slim.min.js',
-      'src/thirds/js/popper.min.js',
-      'src/thirds/js/bootstrap.min.js',
-      'src/thirds/js/angular.min.js',
+      
+      './src/thirds/js/pdf.js',
+      './src/thirds/js/font-awesome.min.js',
+      './src/thirds/js/jquery-3.3.1.slim.min.js',
+      './src/thirds/js/popper.min.js',
+      './src/thirds/js/bootstrap.min.js',
+      './src/thirds/js/angular.min.js',
       './node_modules/angular-mocks/angular-mocks.js',
-      'src/main.js',
-      'test/**/*.js'
+      './src/main.js',
+      './test/**/*.js',
+      './src/template/*.html',
     ],
+    
 
     // list of files / patterns to exclude
     exclude: [
     ],
+
+    preprocessors: {
+      './src/template/*.html': ['ng-html2js']
+    },
+
+    // html2js
+    ngHtml2JsPreprocessor: {
+      stripPrefix: 'src/',
+      moduleName: 'myAppTestTemplates'
+    },
 
     // web server port
     port: 8080,
@@ -59,7 +72,8 @@ module.exports = function(config) {
     // Which plugins to enable
     plugins: [
       'karma-chrome-launcher',
-      'karma-jasmine'
+      'karma-jasmine',
+      'karma-ng-html2js-preprocessor'
     ],
 
     // Continuous Integration mode

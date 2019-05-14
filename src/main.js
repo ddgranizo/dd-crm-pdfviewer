@@ -46,9 +46,14 @@ app.service('settingsService', ['$window',
         }
 
         this.getQueryParam = function (name) {
+            var searchParams = this.getSearchParams();
             var results = new RegExp('[\?&]' + name + '=([^&#]*)')
-                .exec(window.location.search);
+                .exec(searchParams);
             return (results !== null) ? results[1] || 0 : false;
+        }
+
+        this.getSearchParams = function () {
+            return window.location.search;
         }
 
         this.getPropertyFromString = function (o, s) {

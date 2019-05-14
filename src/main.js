@@ -75,31 +75,66 @@ app.service('settingsService', ['$window',
 
 app.service('pdfService', ['$window', 'settingsService',
     function ($window, settingsService) {
+
+        //this.pdfDoc = null;
+        this.pageRendering = false;
+        this.pageNumPending = null;
+        this.canvas = null;
+        this.ctx = null;
+        this.renderPage = function (pdfDoc, num) {
+            this.pageRendering = true;
+            return pdfDoc.getPage(num).then(function (page) {
+                var initialScale = settingsService.getSetting("scale");
+                var scale = initialScale;
+                var viewport = page.getViewport({ scale: scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                var renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                var renderTask = page.render(renderContext);
+                return renderTask.promise;
+            })
+            .then(function () {
+                this.pageRendering = false;
+                if (this.pageNumPending !== null) {
+                    this.renderPage(pdfDoc, this.pageNumPending);
+                    this.pageNumPending = null;
+                }
+            });
+
+        }
+
+        /* this.setPage = function (pageNumber) {
+            this.pdf.getPage(pageNumber).then(function (page) {
+                var initialScale = settingsService.getSetting("scale");
+                var scale = initialScale;
+                var viewport = page.getViewport({ scale: scale });
+                var canvas = document.getElementById('pdf-canvas');
+                var context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                var renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                var renderTask = page.render(renderContext);
+                renderTask.promise.then(function () {
+                    //completed
+                });
+            });
+        } */
+
         this.setPdf = function (encoded) {
             var pdfjsLib = $window['pdfjs-dist/build/pdf'];
+            canvas = document.getElementById('pdf-canvas');
+            ctx = canvas.getContext('2d');;
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.js';
             var loadingTask = pdfjsLib.getDocument({ data: atob(encoded) });
             loadingTask.promise.then(function (pdf) {
-                var pageNumber = 1;
-                pdf.getPage(pageNumber).then(function (page) {
-                    var initialScale = settingsService.getSetting("scale");
-                    var scale = initialScale;
-                    var viewport = page.getViewport({ scale: scale });
-                    var canvas = document.getElementById('pdf-canvas');
-                    var context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    var renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    var renderTask = page.render(renderContext);
-                    renderTask.promise.then(function () {
-                        //completed
-                    });
-                });
-            }, function (reason) {
-                console.error(reason);
+                console.log("loaded!!");
+                return pdf;
             });
             return loadingTask;
         }
@@ -110,8 +145,8 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
 
         this.getPdfAnnotations = function (entity, id) {
             return this.webApiGet(`annotations?$filter=objecttypecode eq '${entity}' and _objectid_value eq ${id} and mimetype eq 'application/pdf'`)
-                .then(response => { 
-                    return response.data.value; 
+                .then(response => {
+                    return response.data.value;
                 })
         }
 
@@ -161,6 +196,11 @@ app.directive('mainView',
                     $scope.saveFirstTextMessage = null;
                     $scope.foundZeroDocumentsMessage = null;
                     $scope.errorTitleMessage = null;
+
+                    $scope.currentPage = 1;
+                    $scope.totalPages = null;
+                    $scope.pdfDoc = null;
+
                     initialize = function () {
 
                         $scope.setMessages();
@@ -176,6 +216,16 @@ app.directive('mainView',
                         $scope.contextEntityName = contextTypeName;
                         $scope.contextId = contextId;
                         $scope.reloadAnnotations();
+                    }
+
+                    $scope.next = function () {
+                        $scope.currentPage++;
+                        pdfService.renderPage($scope.pdfDoc, $scope.currentPage);
+                    }
+
+                    $scope.previous = function () {
+                        $scope.currentPage--;
+                        pdfService.renderPage($scope.pdfDoc, $scope.currentPage);
                     }
 
                     $scope.setMessages = function () {
@@ -229,13 +279,24 @@ app.directive('mainView',
                     $scope.$watch('selectedPdf', function (newValue, oldValue) {
                         if (newValue !== null
                             && newValue["annotationid"] !== null) {
+
+                            console.log(newValue);
                             const encoded = newValue["documentbody"];
-                            pdfService.setPdf(encoded);
+                            pdfService.setPdf(encoded)
+                                .then(pdf => {
+                                    console.log(pdf);
+                                    $scope.$apply(()=>{
+                                        $scope.currentPage = 1;
+                                        $scope.totalPages = pdf.numPages;
+                                        $scope.pdfDoc = pdf;
+                                    })
+                                    pdfService.renderPage(pdf, 1);
+                                })
                         }
                     })
 
                     $scope.unsetInfo = function () {
-                        
+
                         $scope.infoMessage = null;
                         $scope.infoTitle = null;
                         $scope.isInfoMessage = false;

@@ -19,15 +19,22 @@
                     <option ng-repeat="pdf in contextPdfs" ng-value="pdf">{{ getPdfTitle(pdf) }}</option>
                 </select>
             </div>
+            <div class="icon-handler" ng-click="previous()" ng-show="currentPage>1">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <span>Page {{currentPage}}/{{totalPages}}</span>
+            <div class="icon-handler" ng-click="next()" ng-show="currentPage<totalPages">
+                <i class="fas fa-arrow-right"></i>
+            </div>
         </div>
     </div>
 
     <div class="pdf-title-padding" ng-show="isErrorMessage">
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">{{ errorTitle }}</h4>
-                <p>{{ errorMessage }}</p>
-            </div>
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">{{ errorTitle }}</h4>
+            <p>{{ errorMessage }}</p>
         </div>
+    </div>
 
     <div class="pdf-title-padding" ng-show="isInfoMessage">
         <div class="alert alert-primary" role="alert">
@@ -37,9 +44,14 @@
     </div>
 
     <div class="container h-100" ng-show="!loadingAnnotations && selectedPdf!=null">
+
         <div class="row align-items-center h-100">
-            <canvas id="pdf-canvas"></canvas>
+
         </div>
     </div>
+    <div class="row align-items-center h-100">
+        <canvas id="pdf-canvas"></canvas>
+    </div>
+</div>
 
 </div>

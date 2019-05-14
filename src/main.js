@@ -72,8 +72,6 @@ app.service('settingsService', ['$window',
         }
     }]);
 
-
-
 app.service('pdfService', ['$window', 'settingsService',
     function ($window, settingsService) {
         this.setPdf = function (encoded) {
@@ -106,18 +104,16 @@ app.service('pdfService', ['$window', 'settingsService',
         }
     }]);
 
-
-
 app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'settingsService',
     function ($window, $http, $q, $rootScope, settingsService) {
 
         this.getPdfAnnotations = function (entity, id) {
-            return webApiGet(`annotations?$filter=objecttypecode eq '${entity}' and _objectid_value eq ${id} and mimetype eq 'application/pdf'`)
+            return this.webApiGet(`annotations?$filter=objecttypecode eq '${entity}' and _objectid_value eq ${id} and mimetype eq 'application/pdf'`)
                 .then(response => { return response.data.value; })
         }
 
-        webApiGet = function (options) {
-            const url = getApiUrl() + options;
+        this.webApiGet = function (options) {
+            const url = this.getApiUrl() + options;
             return $http({
                 method: 'GET',
                 url: url
@@ -126,9 +122,9 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
             })
         }
 
-        getApiUrl = function () {
+        this.getApiUrl = function () {
             let crmVersion = settingsService.getSetting("crmVersion");
-            return `${GetGlobalContext().getClientUrl()}/api/data/v${crmVersion}/`;
+            return `${this.getUrl()}/api/data/v${crmVersion}/`;
         }
 
         this.getUrl = function () {
@@ -136,7 +132,6 @@ app.service('xrmRepositoryService', ['$window', '$http', '$q', '$rootScope', 'se
         }
 
     }]);
-
 
 app.directive('mainView',
     ['xrmRepositoryService', 'settingsService', 'pdfService',

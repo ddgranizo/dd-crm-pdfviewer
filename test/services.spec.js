@@ -1,4 +1,51 @@
 
+
+describe('XrmRepositoryService', function () {
+
+    var settingsService;
+    var xrmRepositoryService;
+
+    beforeEach(module('ddApp'));
+
+    beforeEach(function () {
+        inject(['settingsService', 'xrmRepositoryService',
+            function (_settingsService, _xrmRepositoryService) {
+                settingsService = _settingsService;
+                xrmRepositoryService = _xrmRepositoryService;
+            }
+        ]);
+    });
+
+
+    describe('Obtain URL', function () {
+        var endpoint = "http://www.crm.com/";
+        var crmVersion = "9.1";
+        it('should return valid api URL', function () {
+            spyOn(settingsService, 'getSetting').and.callFake(function () { return crmVersion; });
+            spyOn(xrmRepositoryService, 'getUrl').and.callFake(function () { return endpoint; });
+            var result = xrmRepositoryService.getApiUrl();
+            expect(result).toBe(`${endpoint}/api/data/v${crmVersion}/`);
+        });
+    });
+
+    describe('Get annotations', function () {
+        it('should return path of the json', function () {
+            let responseArray = [1, 2, 3];
+            spyOn(xrmRepositoryService, 'webApiGet').and.callFake(function () { return Promise.resolve({ data: { value: responseArray } }) });
+            xrmRepositoryService.getPdfAnnotations(null, null)
+                .then(response => {
+                    var result = response.length;
+                    expect(result).toBe(responseArray.length);
+                })
+        });
+    });
+
+});
+
+
+
+
+
 describe('SettingsService', function () {
 
     var settingsService;
@@ -14,7 +61,6 @@ describe('SettingsService', function () {
 
     describe('Obtain setting', function () {
         var userSettings = { crmVersion: "1.1", messages: { saveFirstTitle: "No se puede cargar PDF" } };
-
 
         it('should return user setting when exists', function () {
             settingsService.triedParse = true;

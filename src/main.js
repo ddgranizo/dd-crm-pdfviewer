@@ -76,7 +76,6 @@ app.service('settingsService', ['$window',
 app.service('pdfService', ['$window', 'settingsService',
     function ($window, settingsService) {
 
-        //this.pdfDoc = null;
         this.pageRendering = false;
         this.pageNumPending = null;
         this.canvas = null;
@@ -98,33 +97,8 @@ app.service('pdfService', ['$window', 'settingsService',
             })
             .then(function () {
                 this.pageRendering = false;
-                if (this.pageNumPending !== null) {
-                    this.renderPage(pdfDoc, this.pageNumPending);
-                    this.pageNumPending = null;
-                }
             });
-
         }
-
-        /* this.setPage = function (pageNumber) {
-            this.pdf.getPage(pageNumber).then(function (page) {
-                var initialScale = settingsService.getSetting("scale");
-                var scale = initialScale;
-                var viewport = page.getViewport({ scale: scale });
-                var canvas = document.getElementById('pdf-canvas');
-                var context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                var renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
-                var renderTask = page.render(renderContext);
-                renderTask.promise.then(function () {
-                    //completed
-                });
-            });
-        } */
 
         this.setPdf = function (encoded) {
             var pdfjsLib = $window['pdfjs-dist/build/pdf'];

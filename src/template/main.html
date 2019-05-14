@@ -19,13 +19,16 @@
                     <option ng-repeat="pdf in contextPdfs" ng-value="pdf">{{ getPdfTitle(pdf) }}</option>
                 </select>
             </div>
-            <div class="icon-handler" ng-click="previous()" ng-show="currentPage>1">
-                <i class="fas fa-arrow-left"></i>
+            <div class="row d-flex flex-row" style="margin-right: 20px">
+                <div class="icon-handler" ng-click="previous()" ng-show="currentPage>1">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <span>Page {{currentPage}}/{{totalPages}}</span>
+                <div class="icon-handler" ng-click="next()" ng-show="currentPage<totalPages">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
             </div>
-            <span>Page {{currentPage}}/{{totalPages}}</span>
-            <div class="icon-handler" ng-click="next()" ng-show="currentPage<totalPages">
-                <i class="fas fa-arrow-right"></i>
-            </div>
+
         </div>
     </div>
 

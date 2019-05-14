@@ -2,8 +2,9 @@ var defaultSettings = {
     crmVersion: "9.1",
     scale: 1,
     messages: {
-        saveFirstTitle: "Can't load any PDF",
+        cantLoadAnyPdfTitle: "Can't load any PDF",
         saveFirstText: "Save first the record. Then reload the page.",
+        passCrmContextText: "Set the 'Pass context parameters' checked in the form editor for this webresource",
         foundZeroDocuments: "Can't find any PDF in this record. Use annotations to attach PDFs",
         loadingFiles: "Loading PDFs...",
         errorTitle: "Error",
@@ -36,7 +37,7 @@ app.service('settingsService', ['$window',
                 this.triedParse = true;
                 this.parseUserData();
             }
-            if (this.userData != null) {
+            if (this.userData != null && this.userData != false) {
                 let userValue = this.getPropertyFromString(this.userData, settingName);
                 if (userValue != null) {
                     return userValue;
@@ -162,10 +163,12 @@ app.directive('mainView',
                     $scope.selectedPdf = null;
                     $scope.isInfoMessage = false;
                     $scope.notContextId = false;
+                    $scope.notContext = false;
 
 
                     $scope.loadingPdfMessage = null;
-                    $scope.saveFirstTitleMessage = null;
+                    $scope.passCrmContextTextMessage = null;
+                    $scope.cantLoadAnyPdfTitleMessage = null;
                     $scope.saveFirstTextMessage = null;
                     $scope.foundZeroDocumentsMessage = null;
                     $scope.errorTitleMessage = null;
@@ -180,10 +183,16 @@ app.directive('mainView',
 
                         var contextId = settingsService.getQueryParam("id");
                         var contextTypeName = settingsService.getQueryParam("typename");
-
+                        console.log("contextId: " + contextId);
+                        console.log("contextTypeName: " + contextTypeName);
+                        if (!contextId && !contextTypeName) {
+                            $scope.notContext = true;
+                            $scope.setInfo($scope.cantLoadAnyPdfTitleMessage, $scope.passCrmContextTextMessage);
+                            return;
+                        }
                         if ($scope.checkNullIdParameter(contextId)) {
                             $scope.notContextId = true;
-                            $scope.setInfo($scope.saveFirstTitleMessage, $scope.saveFirstTextMessage);
+                            $scope.setInfo($scope.cantLoadAnyPdfTitleMessage, $scope.saveFirstTextMessage);
                             return;
                         }
                         $scope.contextEntityName = contextTypeName;
@@ -203,7 +212,8 @@ app.directive('mainView',
 
                     $scope.setMessages = function () {
                         $scope.loadingPdfMessage = settingsService.getSetting("messages.loadingFiles");
-                        $scope.saveFirstTitleMessage = settingsService.getSetting("messages.saveFirstTitle");
+                        $scope.cantLoadAnyPdfTitleMessage = settingsService.getSetting("messages.cantLoadAnyPdfTitle");
+                        $scope.passCrmContextTextMessage = settingsService.getSetting("messages.passCrmContextText");
                         $scope.saveFirstTextMessage = settingsService.getSetting("messages.saveFirstText");
                         $scope.foundZeroDocumentsMessage = settingsService.getSetting("messages.foundZeroDocuments");
                         $scope.errorTitleMessage = settingsService.getSetting("messages.errorTitle");
@@ -221,7 +231,7 @@ app.directive('mainView',
                                     $scope.selectedPdf = pdfs[0];
                                     $scope.contextPdfs = pdfs;
                                 } else {
-                                    $scope.setInfo($scope.saveFirstTitleMessage, $scope.foundZeroDocumentsMessage);
+                                    $scope.setInfo($scope.cantLoadAnyPdfTitleMessage, $scope.foundZeroDocumentsMessage);
                                 }
                                 $scope.loadingAnnotations = false;
                             })

@@ -11,7 +11,7 @@
 
     <div class="pdf-padding" ng-show="!loadingAnnotations">
         <div class="row d-flex flex-row">
-            <span class="icon-handler" ng-click="reloadAnnotations()" ng-show="!notContextId">
+            <span class="icon-handler" ng-click="reloadAnnotations()" ng-show="!notContextId && !notContext">
                 <i class="fas fa-sync"></i>
             </span>
             <div class="form-group col" ng-show="contextPdfs.length>0">

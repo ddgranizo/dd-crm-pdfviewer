@@ -107,7 +107,6 @@ app.service('pdfService', ['$window', 'settingsService',
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.js';
             var loadingTask = pdfjsLib.getDocument({ data: atob(encoded) });
             loadingTask.promise.then(function (pdf) {
-                console.log("loaded!!");
                 return pdf;
             });
             return loadingTask;
@@ -253,12 +252,9 @@ app.directive('mainView',
                     $scope.$watch('selectedPdf', function (newValue, oldValue) {
                         if (newValue !== null
                             && newValue["annotationid"] !== null) {
-
-                            console.log(newValue);
                             const encoded = newValue["documentbody"];
                             pdfService.setPdf(encoded)
                                 .then(pdf => {
-                                    console.log(pdf);
                                     $scope.$apply(()=>{
                                         $scope.currentPage = 1;
                                         $scope.totalPages = pdf.numPages;

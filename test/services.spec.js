@@ -53,8 +53,8 @@ describe('SettingsService', function () {
     beforeEach(module('ddApp'));
 
     beforeEach(function () {
-        inject(['settingsService', function (service) {
-            settingsService = service;
+        inject(['settingsService', function (_settingsService) {
+            settingsService = _settingsService;
         }
         ]);
     });

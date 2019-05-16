@@ -6,6 +6,14 @@
     padding: 20px;
 }
 
-.icon-handler{
-    font-size: 20px; margin: 10px; cursor: pointer;
+.icon-handler {
+    font-size: 20px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+.wrapper-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }

@@ -11,6 +11,34 @@ You will be able to add a PDF Viewer in a few minuts without any development, ju
 Download the latest version from the repository
 [Release](https://github.com/ddgranizo/dd-crm-pdfviewer/tree/master/release/)
 
+
+## Setup
+
+1. Import latest version of Managed Solution
+
+![Step1](doc/setup/setp_1_import_managed_solution.png)
+
+2. Wait to complete the import
+
+![Step2](doc/setup/setp_2_complete_import.png)
+
+3. Add new web resource to your Form
+
+![Step3](doc/setup/step_3_add_new_webresource_to_form.png)
+
+4. Setup de webresource
+
+![Step4](doc/setup/step_4_setup_webresource.png)
+
+5. Save and publish
+
+![Step5](doc/setup/step_5_save_and_publish.png)
+
+6. Check the viewer in a record
+
+![Step6](doc/setup/step_6_check_viewer_in_form.png)
+
+
 ## Settings
 
 It's possible to customize the behaviour of the tool by this settings:
@@ -45,38 +73,6 @@ Paste it in the "Customizations parameters" box then adding the WebResource
 
 ![Settings](doc/setup/settings.png)
 
-
-## Setup
-
-1. Import latest version of Managed Solution
-
-
-![Step1](doc/setup/setp_1_import_managed_solution.png)
-
-1. Wait to complete the import
-
-
-![Step2](doc/setup/setp_2_complete_import.png)
-
-1. Add new web resource to your Form
-
-
-![Step3](doc/setup/step_3_add_new_webresource_to_form.png)
-
-1. Setup de webresource
-
-
-![Step4](doc/setup/step_4_setup_webresource.png)
-
-1. Save and publish
-
-
-![Step5](doc/setup/step_5_save_and_publish.png)
-
-1. Check the viewer in a record
-   
-
-![Step6](doc/setup/step_6_check_viewer_in_form.png)
 
 
 ## License

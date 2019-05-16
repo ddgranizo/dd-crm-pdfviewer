@@ -69,7 +69,7 @@ Example of valid JSON
 }
 ```
 
-Paste it in the "Customizations parameters" box then adding the WebResource
+Paste it in the "Customizations parameters" box when adding the WebResource
 
 ![Settings](doc/setup/settings.png)
 
